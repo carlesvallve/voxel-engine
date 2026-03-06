@@ -142,6 +142,16 @@ export class CharacterCombat {
     this.flashTimer = owner.params.flashDuration;
     this.stunTimer = owner.params.stunDuration;
 
+    // Cancel in-progress attack on hit — prevents trading blows
+    if (this.isAttacking) {
+      this.isAttacking = false;
+      this.attackHitApplied = false;
+      this.comboBuffered = false;
+      this.lungeDist = 0;
+      owner.mesh.scale.x = Math.abs(owner.mesh.scale.x);
+      this.comboFlipped = false;
+    }
+
     const mat = owner.mesh.material as THREE.MeshStandardMaterial;
     if (mat.emissive) {
       this.originalEmissive.copy(mat.emissive);
