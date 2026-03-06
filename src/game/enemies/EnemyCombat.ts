@@ -6,7 +6,7 @@ import type { NavGrid } from '../pathfinding';
 import type { EnemyVFX } from './EnemyVFX';
 import type { GoreSystem } from '../combat/GoreSystem';
 import type { PotionEffectSystem } from '../combat/PotionEffectSystem';
-import type { LootSystem } from '../combat/Loot';
+import { FOOD_DROP_CHANCE, type LootSystem } from '../combat/Loot';
 import { audioSystem } from '../../utils/AudioSystem';
 import { getArchetype, getSlashStyle } from '../character';
 import { findPath } from '../pathfinding';
@@ -69,6 +69,8 @@ export class EnemyCombat {
     targets: Enemy[];
     index: number;
     dashing: boolean;
+    /** Pause timer between hits (seconds remaining) */
+    hitPause: number;
   } | null = null;
 
   private readonly enemies: Enemy[];
@@ -159,7 +161,7 @@ export class EnemyCombat {
       targets.push(candidates[i % candidates.length].enemy);
     }
 
-    this.critChain = { targets, index: 0, dashing: true };
+    this.critChain = { targets, index: 0, dashing: true, hitPause: 0 };
   }
 
   updateCritChain(
@@ -174,6 +176,12 @@ export class EnemyCombat {
     if (chain.index >= chain.targets.length) {
       this.critChain = null;
       return false;
+    }
+
+    // Pause between hits for dramatic effect
+    if (chain.hitPause > 0) {
+      chain.hitPause -= dt;
+      return true;
     }
 
     const target = chain.targets[chain.index];
@@ -301,7 +309,7 @@ export class EnemyCombat {
             );
           }
           this.lootSystem.spawnLoot(pos.clone());
-          if (Math.random() < 0.4) this.lootSystem.spawnFood(pos.clone());
+          if (Math.random() < FOOD_DROP_CHANCE) this.lootSystem.spawnFood(pos.clone());
           audioSystem.sfxAt('death', pos.x, pos.z);
           this.cleanupEnemy(target);
           target.dispose();
@@ -314,6 +322,7 @@ export class EnemyCombat {
 
     chain.index++;
     chain.dashing = true;
+    chain.hitPause = 0.12; // brief pause between chain hits
     return true;
   }
 }

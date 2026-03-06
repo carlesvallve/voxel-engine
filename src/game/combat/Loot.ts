@@ -12,6 +12,18 @@ import {
 import { POTION_HUES, POTION_COLORS } from './PotionEffectSystem';
 import type { PotionEffectSystem } from './PotionEffectSystem';
 
+// ── Food balance constants ──────────────────────────────────────────
+/** Chance of bonus food drop on enemy kill (outside loot table) */
+export const FOOD_DROP_CHANCE = 0.12;
+/** Hunger restored per food pickup */
+export const FOOD_HUNGER_VALUE = 15;
+/** Base food weight in loot table (when well-fed) */
+export const FOOD_LOOT_WEIGHT_BASE = 0.08;
+/** Max extra food weight added when starving */
+export const FOOD_LOOT_WEIGHT_HUNGRY_BONUS = 0.10;
+/** Hunger ratio below which food weight starts increasing */
+export const FOOD_HUNGER_THRESHOLD = 0.35;
+
 interface LootItem {
   mesh: THREE.Mesh;
   entity: Entity;
@@ -261,14 +273,23 @@ export class LootSystem {
   }
 
   spawnLoot(position: THREE.Vector3, tier: 'common' | 'rare' | 'epic' = 'common'): void {
+    // Subtle hunger-dependent food nudge: slight boost when hungry, heavily randomized
+    const hunger = useGameStore.getState().hunger ?? 80;
+    const hungerRatio = Math.max(0, Math.min(1, hunger / 100));
+    const hungerNudge = hungerRatio < FOOD_HUNGER_THRESHOLD
+      ? Math.random() * FOOD_LOOT_WEIGHT_HUNGRY_BONUS * (1 - hungerRatio / FOOD_HUNGER_THRESHOLD)
+      : 0;
+    const foodWeight = FOOD_LOOT_WEIGHT_BASE + hungerNudge;
+    const coinWeight = 0.67 - foodWeight; // redistribute to coins
+
     // Tier-based loot parameters — all item types roll within the same pool
     const tierConfig = {
       common: { minCount: 2, maxCount: 3, maxPotions: 1, coinMin: 1, coinMax: 2,
-                weights: { coin: 0.55, potion: 0.15, food: 0.20, gem: 0.10 } },
+                weights: { coin: coinWeight, potion: 0.15, food: foodWeight, gem: 0.10 } },
       rare:   { minCount: 3, maxCount: 4, maxPotions: 2, coinMin: 2, coinMax: 4,
-                weights: { coin: 0.55, potion: 0.15, food: 0.20, gem: 0.10 } },
+                weights: { coin: coinWeight, potion: 0.15, food: foodWeight, gem: 0.10 } },
       epic:   { minCount: 4, maxCount: 5, maxPotions: 2, coinMin: 3, coinMax: 6,
-                weights: { coin: 0.55, potion: 0.15, food: 0.20, gem: 0.10 } },
+                weights: { coin: coinWeight, potion: 0.15, food: foodWeight, gem: 0.10 } },
     };
     const cfg = tierConfig[tier];
     const count = cfg.minCount + Math.floor(Math.random() * (cfg.maxCount - cfg.minCount + 1));
@@ -355,7 +376,7 @@ export class LootSystem {
       case 'coin': value = coinMin + Math.floor(Math.random() * (coinMax - coinMin + 1)); break;
       case 'potion': value = 3; break;
       case 'gem': value = 1; break;
-      case 'food': hungerValue = 15; break;
+      case 'food': hungerValue = FOOD_HUNGER_VALUE; break;
     }
 
     const item: LootItem = {
@@ -378,7 +399,7 @@ export class LootSystem {
   }
 
   /** Spawn a food item (meat chunk) at the given position. */
-  spawnFood(position: THREE.Vector3, hungerValue = 15): void {
+  spawnFood(position: THREE.Vector3, hungerValue = FOOD_HUNGER_VALUE): void {
     const mesh = new THREE.Mesh(this.foodGeo, this.foodMat);
     mesh.position.copy(position);
     mesh.position.y += 0.15;

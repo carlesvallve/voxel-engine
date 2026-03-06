@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { Environment } from '../environment';
 import type { NavGrid } from '../pathfinding';
-import type { LootSystem } from '../combat/Loot';
+import { FOOD_DROP_CHANCE, type LootSystem } from '../combat/Loot';
 import type { LadderDef } from '../dungeon';
 import { Character } from '../character';
 import { Enemy } from '../character';
@@ -464,7 +464,7 @@ export class EnemySystem {
           );
         }
         this.lootSystem.spawnLoot(pos.clone());
-        if (Math.random() < 0.4) this.lootSystem.spawnFood(pos.clone());
+        if (Math.random() < FOOD_DROP_CHANCE) this.lootSystem.spawnFood(pos.clone());
         audioSystem.sfxAt('death', pos.x, pos.z);
         this.cleanupEnemy(enemy);
         enemy.dispose();
@@ -575,14 +575,15 @@ export class EnemySystem {
       }
       enemy.update(dt);
 
-      // Awareness fog (open maps)
+      // Awareness fog (open maps) — frenzy enemies always fully visible
       if (!roomVis) {
         const dist = Math.sqrt(distSq);
         const chaseRange =
           useGameStore.getState().enemyParams.chaseRange * 0.25;
         const visRange = chaseRange * 1.5;
-        const targetOpacity =
-          dist <= chaseRange
+        const targetOpacity = isFrenzyEnemy
+          ? 1.0
+          : dist <= chaseRange
             ? 1.0
             : dist >= visRange
               ? 0.0

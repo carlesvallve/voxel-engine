@@ -549,8 +549,9 @@ export class OverworldMap {
   // ── POI markers on tiles ─────────────────────────────────────────
 
   /** Place small POI markers on overworld tiles. Call after build(). */
-  generatePOIMarkers(): void {
+  generatePOIMarkers(clearedDungeons: number[] = []): void {
     const MINI_SCALE = 0.05; // base scale for mini markers on 4m tiles
+    const clearedSet = new Set(clearedDungeons);
 
     for (const tile of this.tiles) {
       for (const poi of tile.def.pois) {
@@ -564,11 +565,28 @@ export class OverworldMap {
           tile.heights, tile.resolution, tile.groundSize, lx, lz,
         );
 
+        const isCleared = poi.type === 'dungeon' && clearedSet.has(poi.poiSeed);
+
         let marker: THREE.Group;
         if (poi.type === 'village') {
           marker = buildMiniCastle(poi.poiSeed, MINI_SCALE);
         } else {
           marker = buildMiniDungeonMarker(poi.poiSeed, MINI_SCALE);
+        }
+
+        // Darken cleared dungeon markers
+        if (isCleared) {
+          marker.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+              const m = (child as THREE.Mesh).material;
+              const mats = Array.isArray(m) ? m : [m];
+              for (const mat of mats) {
+                if ((mat as THREE.MeshStandardMaterial).color) {
+                  (mat as THREE.MeshStandardMaterial).color.multiplyScalar(0.45);
+                }
+              }
+            }
+          });
         }
 
         marker.position.set(wx, y, wz);
@@ -583,13 +601,18 @@ export class OverworldMap {
           const skullStr = isDungeon && poi.skulls
             ? '\u2620'.repeat(Math.min(poi.skulls, 3))
             : '';
-          const labelColor = isDungeon ? '#dd9966' : '#ffe8a0';
+          const labelColor = isCleared ? '#88aa77' : isDungeon ? '#dd9966' : '#ffe8a0';
           const labelH = 0.18;
           const labelY = y + (isDungeon ? 0.3 : 0.35);
           const labelOffset = 0.3;
 
-          const shortText = isDungeon ? skullStr : poi.name;
-          const fullText = isDungeon && skullStr ? `${skullStr} ${poi.name}` : poi.name;
+          const conqueredMark = isCleared ? '\u2714' : ''; // ✔
+          const shortText = isCleared
+            ? (skullStr ? `${conqueredMark}${skullStr}` : conqueredMark)
+            : isDungeon ? skullStr : poi.name;
+          const fullText = isCleared
+            ? `${conqueredMark}${skullStr ? skullStr + ' ' : ''}${poi.name}`
+            : isDungeon && skullStr ? `${skullStr} ${poi.name}` : poi.name;
 
           const label = createTextLabel(shortText, {
             color: labelColor, height: labelH, depthTest: false, renderOrder: 900,

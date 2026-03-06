@@ -62,7 +62,7 @@ export class CharacterCombat {
   /** Maximum hunger. */
   maxHunger = 100;
   /** Hunger points lost per second. */
-  hungerDecayRate = 0.5;
+  hungerDecayRate = 0.8;
   /** HP lost per second when hunger ≤ starvation threshold. */
   starvationDamage = 0.2;
   /** Hunger threshold below which starvation damage kicks in. */

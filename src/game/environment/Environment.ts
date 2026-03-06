@@ -111,7 +111,7 @@ export class Environment implements TerrainLike {
       if (useGameStore.getState().natureEnabled) {
         owMap.generateNatureForTiles();
       }
-      owMap.generatePOIMarkers();
+      owMap.generatePOIMarkers(useGameStore.getState().overworldState?.clearedDungeons ?? []);
       this.ctx.overworldMap = owMap;
       this.ctx.group.add(owMap.group);
     } else if (preset === 'heightmap') {

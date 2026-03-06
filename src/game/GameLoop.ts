@@ -226,8 +226,8 @@ export function createGameLoop(
         }
       }
 
-      // E or M on overworld → zoom into tile
-      if (isOverworld && (ctx.cachedInputState.interact || ctx.cachedInputState.mapKey) && playerChar.isAlive) {
+      // E, M, or Attack on overworld → zoom into tile
+      if (isOverworld && (ctx.cachedInputState.interact || ctx.cachedInputState.mapKey || ctx.cachedInputState.attack) && playerChar.isAlive) {
         const pos = playerChar.getPosition();
         const tileIdx = getTileAtWorldPos(pos.x, pos.z);
         if (tileIdx !== null && owState) {
@@ -578,6 +578,18 @@ export function createGameLoop(
         if (ctx.edgeTravelEnterPrompt) ctx.edgeTravelEnterPrompt.visible = false;
       }
 
+      // ── Overworld: movement only, no combat/potions/enemies ──
+      if (isOverworld) {
+        characters.syncAllCharacterParams();
+        const savedHunger = playerChar.hungerEnabled;
+        playerChar.hungerEnabled = false;
+        for (const char of ctx.characters) char.update(dt);
+        playerChar.hungerEnabled = savedHunger;
+      }
+
+      // ── Gameplay systems (dungeons + heightmaps only) ──
+      if (!isOverworld) {
+
       // Seppuku
       if (ctx.cachedInputState.seppuku && phase === 'playing' && playerChar.isAlive) {
         playerChar.hp = 0;
@@ -879,6 +891,7 @@ export function createGameLoop(
           char.update(dt);
         }
       }
+
       playerChar.params.speed = baseSpeed;
 
       // Sync HP + hunger
@@ -1208,6 +1221,8 @@ export function createGameLoop(
           },
         );
       }
+
+      } // end non-overworld gameplay block
 
       // Audio listener
       const pp = ctx.activeCharacter.getPosition();
