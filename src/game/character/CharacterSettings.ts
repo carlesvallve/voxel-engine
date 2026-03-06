@@ -82,7 +82,7 @@ export const DEFAULT_CHARACTER_PARAMS: MovementParams = {
   arrivalReach: 0.05,
   hopHeight: 0.05,
   movementMode: 'grid' as MovementMode,
-  showPathDebug: true,
+  showPathDebug: false,
   // combat
   attackReach: 0.75,
   attackArcHalf: Math.PI / 3,
@@ -97,12 +97,12 @@ export const DEFAULT_CHARACTER_PARAMS: MovementParams = {
   lungeDistance: 0.3,
   lungeDuration: 0.15,
   exhaustDuration: 0.25,
-  footIKEnabled: false,
+  footIKEnabled: true,
   // loot / VFX
   magnetRadius: 0.7,
   magnetSpeed: 16,
   // combat modes
-  melee: { autoTarget: true, knockback: 5, showSlashEffect: true, hitstopEnabled: true },
+  melee: { autoTarget: true, knockback: 5, showSlashEffect: true, hitstopEnabled: false },
   ranged: { autoTarget: true, knockback: 2.5 },
 };
 

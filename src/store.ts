@@ -225,14 +225,14 @@ export const DEFAULT_SCENE_SETTINGS = {
   roomSpacing: 2,
   roomSpacingMax: 5,
   tileSize: 0.75,
-  gridOpacity: 0.25,
+  gridOpacity: 0.1,
   resolutionScale: 1,
   testProp: '' as string, // empty = normal templates, category name = spawn only that
   testFloor: '' as string, // empty = random ground tiles, tile id = use only that
   doorChance: 0.7,
   heightChance: 0.55, // probability of height change between rooms (0–1)
   loopChance: 0.35, // loop corridor budget as fraction of rooms (0–1)
-  roomLabels: true, // voxelDungeon: show room name labels (e.g. "Barracks")
+  roomLabels: false, // voxelDungeon: show room name labels (e.g. "Barracks")
   natureEnabled: true,
   useBiomes: true,
   debugBiomes: false,
